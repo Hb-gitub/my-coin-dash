@@ -8,19 +8,19 @@ class CoinDash extends Phaser.Scene {
     this.finished = false;
     this.deadline = this.time.now + c.roundSeconds * 1000;
     this.physics.world.setBounds(0, 44, c.width, c.height - 44);
-    this.add.grid(c.width / 2, c.height / 2, c.width, c.height, 40, 40,
-      c.colors.background, 1, 0x24334b, 0.45);
-    this.hud = this.add.text(18, 12, '', { font: '18px monospace', color: '#ffffff' });
-    this.player = this.add.rectangle(c.width / 2, c.height / 2, 24, 24, c.colors.player);
+    this.panel = null;
+    this.grid = this.add.grid(c.width / 2, c.height / 2, c.width, c.height, 40, 40);
+    this.hud = this.add.text(18, 12, '', { font: '18px monospace' });
+    this.player = this.add.rectangle(c.width / 2, c.height / 2, 24, 24);
     this.physics.add.existing(this.player);
     this.player.body.setCollideWorldBounds(true);
-    this.coin = this.add.circle(100, 100, 9, c.colors.coin);
+    this.coin = this.add.circle(100, 100, 9);
     this.physics.add.existing(this.coin);
     this.coin.body.setCircle(9);
     this.placeCoin();
     this.drones = this.physics.add.group();
     for (let i = 0; i < c.droneCount; i++) {
-      const drone = this.add.rectangle(90 + i * 270, 100, 26, 26, c.colors.drone);
+      const drone = this.add.rectangle(90 + i * 270, 100, 26, 26);
       this.drones.add(drone);
       drone.body.setCollideWorldBounds(true).setBounce(1, 1);
       const angle = (35 + i * 105) * Math.PI / 180;
@@ -35,6 +35,28 @@ class CoinDash extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,R');
     this.input.keyboard.on('keydown-R', () => this.scene.restart());
+    // Plain D moves right (WASD), so the theme toggle is Shift+D.
+    this.input.keyboard.on('keydown-D', event => {
+      if (!event.shiftKey || event.repeat) return;
+      COIN_DASH.theme = COIN_DASH.theme === 'dark' ? 'light' : 'dark';
+      this.applyTheme();
+    });
+    this.applyTheme();
+  }
+
+  applyTheme() {
+    const t = COIN_DASH.themes[COIN_DASH.theme];
+    document.body.classList.toggle('light', COIN_DASH.theme === 'light');
+    this.cameras.main.setBackgroundColor(t.background);
+    this.grid.setFillStyle(t.background, 1).setOutlineStyle(t.grid, 0.45);
+    this.hud.setColor(t.text);
+    this.player.setFillStyle(t.player);
+    this.coin.setFillStyle(t.coin);
+    this.drones.getChildren().forEach(drone => drone.setFillStyle(t.drone));
+    if (this.panel) {
+      this.panel.setFillStyle(t.panel, 0.95);
+      this.message.setColor(t.text);
+    }
   }
 
   placeCoin() {
@@ -67,11 +89,12 @@ class CoinDash extends Phaser.Scene {
     this.finished = true;
     this.physics.pause();
     const c = COIN_DASH;
-    this.add.rectangle(c.width / 2, c.height / 2, 460, 150, 0x0a1120, 0.95);
-    this.add.text(c.width / 2, c.height / 2,
+    this.panel = this.add.rectangle(c.width / 2, c.height / 2, 460, 150);
+    this.message = this.add.text(c.width / 2, c.height / 2,
       `${reason}\n${this.score} coins collected\nPress R to try again`,
-      { font: '24px monospace', color: '#ffffff', align: 'center', lineSpacing: 12 }
+      { font: '24px monospace', align: 'center', lineSpacing: 12 }
     ).setOrigin(0.5);
+    this.applyTheme();
   }
 }
 window.coinDashGame = new Phaser.Game({
@@ -79,7 +102,7 @@ window.coinDashGame = new Phaser.Game({
   parent: 'game',
   width: COIN_DASH.width,
   height: COIN_DASH.height,
-  backgroundColor: COIN_DASH.colors.background,
+  backgroundColor: COIN_DASH.themes[COIN_DASH.theme].background,
   physics: { default: 'arcade', arcade: { debug: false } },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY },
   scene: CoinDash
