@@ -7,6 +7,8 @@ window.COIN_DASH = {
   droneSpeed: 105,
   droneCount: 3,
   theme: 'dark',
+  // localStorage key for the best score across rounds and page reloads.
+  highScoreKey: 'coinDash.highScore',
   // Canvas colours per theme; style.css has the matching page colours under body.light.
   themes: {
     dark: { background: 0x101c31, grid: 0x24334b, panel: 0x0a1120, text: '#ffffff',
